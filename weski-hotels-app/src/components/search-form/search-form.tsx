@@ -40,6 +40,7 @@ const SearchForm: React.FC<SearchFormProps> = ({ onResults, onSearchStart }) => 
         });
 
         socket.on("result", (data: FormattedHotel[]) => {
+            console.log('data', data)
             onResults(data)
         });
 
@@ -92,10 +93,3 @@ const SearchForm: React.FC<SearchFormProps> = ({ onResults, onSearchStart }) => 
 }
 
 export default SearchForm;
-// <ul className="hotel-results">
-//     {hotels.map((hotel, index) => (
-//         <li key={index}>
-//             {hotel.hotel_name} - ${hotel.price} (for  people)
-//         </li>
-//     ))}
-// </ul>
