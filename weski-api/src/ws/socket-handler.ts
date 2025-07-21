@@ -1,8 +1,10 @@
 import { Server, Socket } from "socket.io";
-import { getHotelsBySize, extractAndSortUniqueHotels } from "../services/hotel.service";
 import {SearchFields} from "../types/SearchFields";
+import {HotelIntegrationManager} from "../integrations/HotelIntegrationManager";
 
 export function handleSocketConnection(io: Server) {
+    const manager = new HotelIntegrationManager();
+
     io.on("connection", (socket: Socket) => {
         console.log("Client connected via socket.io");
 
@@ -12,9 +14,18 @@ export function handleSocketConnection(io: Server) {
 
             try {
                 for (const size of sizes) {
-                    const hotels = await getHotelsBySize({...payload, group_size: size });
-                    const sortedHotels = extractAndSortUniqueHotels(hotels, hotelMap);
-                    socket.emit("result", sortedHotels);
+                    const newPayload = { ...payload, group_size: size };
+                    for (const provider of manager.getProviders()) {
+                        const hotels = await provider.searchHotels(newPayload);
+
+                        for (const hotel of hotels) {
+                            if (!hotelMap.has(hotel.hotel_code)) {
+                                hotelMap.set(hotel.hotel_code, hotel);
+                            }
+                        }
+
+                        socket.emit("result", [...hotelMap.values()]);
+                    }
                 }
 
                 socket.emit("done");
